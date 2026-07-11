@@ -12,7 +12,7 @@ public class PriorityQueueTests
     // Defect(s) Found:
     // The original loop did not examine the last item in the queue.
     // The original Dequeue method returned an item without removing it.
-    public void TestPriorityQueue_HighestPriority()
+    public void TestPriorityQueue_1()
     {
         var priorityQueue = new PriorityQueue();
 
@@ -32,7 +32,7 @@ public class PriorityQueueTests
     // Defect(s) Found:
     // The original comparison used >=, which selected the last item with the
     // highest priority instead of preserving FIFO order.
-    public void TestPriorityQueue_SamePriorityUsesFifo()
+    public void TestPriorityQueue_2()
     {
         var priorityQueue = new PriorityQueue();
 

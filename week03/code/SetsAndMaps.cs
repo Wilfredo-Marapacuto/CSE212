@@ -12,7 +12,7 @@ public static class SetsAndMaps
     /// ["am & ma", "if & fi"]
     ///
     /// The order of the array does not matter, nor does the order of the specific words in each string in the array.
-    /// at would not be returned because ta is not in the list of words.
+    /// at would not be returned because ta was not in the list of words.
     ///
     /// As a special case, if the letters are the same (example: 'aa') then
     /// it would not match anything else (remember the assumption above
@@ -21,8 +21,31 @@ public static class SetsAndMaps
     /// <param name="words">An array of 2-character words (lowercase, no duplicates)</param>
     public static string[] FindPairs(string[] words)
     {
-        // TODO Problem 1 - ADD YOUR CODE HERE
-        return [];
+        var seenWords = new HashSet<int>();
+        var pairs = new List<string>();
+
+        foreach (var word in words)
+        {
+            var first = word[0];
+            var second = word[1];
+
+            if (first == second)
+            {
+                continue;
+            }
+
+            var wordCode = (first << 16) | second;
+            var reversedCode = (second << 16) | first;
+
+            if (seenWords.Contains(reversedCode))
+            {
+                pairs.Add($"{second}{first} & {word}");
+            }
+
+            seenWords.Add(wordCode);
+        }
+
+        return pairs.ToArray();
     }
 
     /// <summary>
@@ -39,10 +62,20 @@ public static class SetsAndMaps
     public static Dictionary<string, int> SummarizeDegrees(string filename)
     {
         var degrees = new Dictionary<string, int>();
+
         foreach (var line in File.ReadLines(filename))
         {
             var fields = line.Split(",");
-            // TODO Problem 2 - ADD YOUR CODE HERE
+            var degree = fields[3].Trim();
+
+            if (degrees.ContainsKey(degree))
+            {
+                degrees[degree]++;
+            }
+            else
+            {
+                degrees[degree] = 1;
+            }
         }
 
         return degrees;
@@ -66,8 +99,58 @@ public static class SetsAndMaps
     /// </summary>
     public static bool IsAnagram(string word1, string word2)
     {
-        // TODO Problem 3 - ADD YOUR CODE HERE
-        return false;
+        var letterCounts = new Dictionary<char, int>();
+
+        foreach (var character in word1)
+        {
+            if (character == ' ')
+            {
+                continue;
+            }
+
+            var letter = char.ToLowerInvariant(character);
+
+            if (letterCounts.ContainsKey(letter))
+            {
+                letterCounts[letter]++;
+            }
+            else
+            {
+                letterCounts[letter] = 1;
+            }
+        }
+
+        foreach (var character in word2)
+        {
+            if (character == ' ')
+            {
+                continue;
+            }
+
+            var letter = char.ToLowerInvariant(character);
+
+            if (!letterCounts.ContainsKey(letter))
+            {
+                return false;
+            }
+
+            letterCounts[letter]--;
+
+            if (letterCounts[letter] < 0)
+            {
+                return false;
+            }
+        }
+
+        foreach (var count in letterCounts.Values)
+        {
+            if (count != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -87,20 +170,38 @@ public static class SetsAndMaps
     public static string[] EarthquakeDailySummary()
     {
         const string uri = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
+
         using var client = new HttpClient();
         using var getRequestMessage = new HttpRequestMessage(HttpMethod.Get, uri);
-        using var jsonStream = client.Send(getRequestMessage).Content.ReadAsStream();
+        using var response = client.Send(getRequestMessage);
+        using var jsonStream = response.Content.ReadAsStream();
         using var reader = new StreamReader(jsonStream);
+
         var json = reader.ReadToEnd();
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-        var featureCollection = JsonSerializer.Deserialize<FeatureCollection>(json, options);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
-        // TODO Problem 5:
-        // 1. Add code in FeatureCollection.cs to describe the JSON using classes and properties 
-        // on those classes so that the call to Deserialize above works properly.
-        // 2. Add code below to create a string out each place a earthquake has happened today and its magitude.
-        // 3. Return an array of these string descriptions.
-        return [];
+        var featureCollection =
+            JsonSerializer.Deserialize<FeatureCollection>(json, options);
+
+        if (featureCollection == null)
+        {
+            return [];
+        }
+
+        var summaries = new List<string>();
+
+        foreach (var feature in featureCollection.Features)
+        {
+            var place = feature.Properties.Place;
+            var magnitude = feature.Properties.Mag;
+
+            summaries.Add($"{place} - Mag {magnitude}");
+        }
+
+        return summaries.ToArray();
     }
 }
